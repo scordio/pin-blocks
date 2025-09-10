@@ -1,0 +1,31 @@
+/*
+ * Copyright © 2025 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.github.scordio.tests.pinblocks.iso9564;
+
+import io.github.scordio.pinblocks.iso9564.Format4;
+import org.junit.jupiter.api.Test;
+
+import java.nio.CharBuffer;
+
+class Format4Tests {
+
+	@Test
+	void test() {
+		byte[] pinBlock = Format4.encoder().withECBMode(Cipher.AES_ECB).encode("123456", "000000");
+		CharBuffer pin = Format4.decoder().withECBMode(Cipher.AES_ECB).decode(pinBlock, "000000");
+	}
+
+}
