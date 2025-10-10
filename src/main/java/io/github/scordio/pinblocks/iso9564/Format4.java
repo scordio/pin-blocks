@@ -50,24 +50,21 @@ public class Format4 {
 
 		private final RandomGenerator generator;
 
-		private final MacCalculator cbcMacCalculator;
+		private final Encryptor ecbEncryptor;
 
-		private Encoder(RandomGenerator generator, MacCalculator cbcMacCalculator) {
+		private Encoder(RandomGenerator generator, Encryptor ecbEncryptor) {
 			this.generator = generator;
-			this.cbcMacCalculator = cbcMacCalculator;
+			this.ecbEncryptor = ecbEncryptor;
 		}
 
 		public Encoder withRandomGenerator(RandomGenerator generator) {
-			return new Encoder(generator, cbcMacCalculator);
+			return new Encoder(generator, ecbEncryptor);
 		}
 
 		public byte[] encode(CharSequence pin, CharSequence pan) {
-			byte[] block = ByteBuffer.allocate(32) //
-				.put(createPinField(pin)) //
-				.put(createPanField(pan)) //
-				.array();
-
-			return cbcMacCalculator.calculate(block);
+			byte[] intermediateBlockA = ecbEncryptor.encrypt(createPinField(pin));
+			byte[] intermediateBlockB = xor(intermediateBlockA, createPanField(pan));
+			return ecbEncryptor.encrypt(intermediateBlockB);
 		}
 
 		private byte[] createPinField(CharSequence pin) {
@@ -111,27 +108,14 @@ public class Format4 {
 			return HexFormat.parseHex(hex);
 		}
 
+		private static byte[] xor(byte[] x1, byte[] x2) {
+			return null; // FIXME
+		}
+
 		public static class Builder {
 
-			public Encoder withCBCMacMode(MacCalculator cbcMacCalculator) {
-				return new Encoder(SecureRandom::new, cbcMacCalculator);
-			}
-
 			public Encoder withECBMode(Encryptor ecbEncryptor) {
-				// FIXME suboptimal as the two subarrays already exist
-				MacCalculator cbcMacCalculator = input -> {
-					byte[] pinField = Arrays.copyOfRange(input, 0, input.length / 2);
-					byte[] intermediateBlockA = ecbEncryptor.encrypt(pinField);
-					byte[] panField = Arrays.copyOfRange(input, input.length / 2, input.length);
-					byte[] intermediateBlockB = xor(intermediateBlockA, panField);
-					return ecbEncryptor.encrypt(intermediateBlockB);
-				};
-
-				return new Encoder(SecureRandom::new, cbcMacCalculator);
-			}
-
-			private static byte[] xor(byte[] x1, byte[] x2) {
-				return null; // FIXME
+				return new Encoder(SecureRandom::new, ecbEncryptor);
 			}
 
 		}
