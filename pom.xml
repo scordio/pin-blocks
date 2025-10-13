@@ -65,6 +65,12 @@
     </dependency>
     <!-- Test -->
     <dependency>
+      <groupId>io.github.scordio</groupId>
+      <artifactId>junit-converters</artifactId>
+      <version>0.1.0-SNAPSHOT</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
       <version>4.0.0-M1</version>
@@ -99,6 +105,7 @@
               <compilerArg>--should-stop=ifError=FLOW</compilerArg>
               <compilerArg>
                 -Xplugin:ErrorProne
+                -Xep:ImmutableEnumChecker:OFF
                 -XepOpt:NullAway:OnlyNullMarked
               </compilerArg>
             </compilerArgs>

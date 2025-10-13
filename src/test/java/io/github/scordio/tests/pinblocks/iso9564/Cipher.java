@@ -18,17 +18,21 @@ package io.github.scordio.tests.pinblocks.iso9564;
 import io.github.scordio.pinblocks.iso9564.Decryptor;
 import io.github.scordio.pinblocks.iso9564.Encryptor;
 
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import java.security.GeneralSecurityException;
 
 enum Cipher implements Encryptor, Decryptor {
 
 	AES_ECB("AES/ECB/NoPadding");
 
+	private static final SecretKey key = new SecretKeySpec(new byte[32], "AES");
+
 	private final javax.crypto.Cipher cipher;
 
 	Cipher(String transformation) {
 		try {
-			this.cipher = javax.crypto.Cipher.getInstance("AES/ECB/NoPadding");
+			cipher = javax.crypto.Cipher.getInstance(transformation);
 		}
 		catch (GeneralSecurityException e) {
 			throw new RuntimeException(e);
@@ -37,12 +41,24 @@ enum Cipher implements Encryptor, Decryptor {
 
 	@Override
 	public byte[] encrypt(byte[] input) {
-		return new byte[0]; // FIXME
+		try {
+			cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, key);
+			return cipher.doFinal(input);
+		}
+		catch (GeneralSecurityException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
 	public byte[] decrypt(byte[] input) {
-		return new byte[0]; // FIXME
+		try {
+			cipher.init(javax.crypto.Cipher.DECRYPT_MODE, key);
+			return cipher.doFinal(input);
+		}
+		catch (GeneralSecurityException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 }

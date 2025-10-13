@@ -17,10 +17,7 @@
 /**
  *
  */
-module io.github.scordio.pinblocks {
+@NullMarked
+package io.github.scordio.tests.pinblocks.iso9564;
 
-	requires static transitive org.jspecify;
-
-	exports io.github.scordio.pinblocks.iso9564;
-
-}
+import org.jspecify.annotations.NullMarked;

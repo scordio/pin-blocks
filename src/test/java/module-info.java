@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 open module io.github.scordio.pinblocks.tests {
-  requires io.github.scordio.pinblocks;
-  requires org.assertj.core;
-  requires org.junit.jupiter.params;
+
+	requires io.github.scordio.junit.converters;
+	requires io.github.scordio.pinblocks;
+	requires org.assertj.core;
+	requires org.junit.jupiter.params;
+
 }

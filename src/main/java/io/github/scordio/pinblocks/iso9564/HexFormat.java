@@ -20,11 +20,9 @@ import java.util.Objects;
 class HexFormat {
 
 	static byte[] parseHex(CharSequence source) {
-		Objects.requireNonNull(source, "'null' is not supported");
-
 		int length = source.length();
 		if (length % 2 != 0) {
-			throw new IllegalArgumentException("Hex string must have even length");
+			throw new IllegalArgumentException("'source' must have even length, but was: " + source.length());
 		}
 
 		byte[] bytes = new byte[length / 2];
@@ -43,6 +41,19 @@ class HexFormat {
 			throw new IllegalArgumentException("Invalid hex character at position " + index);
 		}
 		return digit;
+	}
+
+	static String formatHex(byte[] source) {
+		Objects.requireNonNull(source, "'null' is not supported");
+
+		StringBuilder builder = new StringBuilder(source.length * 2);
+		for (byte b : source) {
+			int hi = (b >> 4) & 0x0F;
+			int lo = b & 0x0F;
+			builder.append(Character.toUpperCase(Character.forDigit(hi, 16)));
+			builder.append(Character.toUpperCase(Character.forDigit(lo, 16)));
+		}
+		return builder.toString();
 	}
 
 }

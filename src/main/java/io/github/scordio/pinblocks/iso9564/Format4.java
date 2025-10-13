@@ -18,10 +18,22 @@ package io.github.scordio.pinblocks.iso9564;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.security.SecureRandom;
-import java.util.Arrays;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 public class Format4 {
+
+	private static final Pattern PIN_PATTERN = Pattern.compile("\\d{4,12}");
+
+	private static final char PIN_CONTROL_FIELD = '4';
+
+	private static final String PIN_FILL_DIGIT = "A";
+
+	private static final Pattern PAN_PATTERN = Pattern.compile("\\d{0,19}");
+
+	private static final int PAN_BASE_LENGTH = 12;
+
+	private static final String PAN_PAD_DIGIT = "0";
 
 	private Format4() {
 	}
@@ -34,37 +46,58 @@ public class Format4 {
 		return new Decoder.Builder();
 	}
 
+	private static String createPinFillDigits(int pinLength) {
+		return PIN_FILL_DIGIT.repeat(14 - pinLength);
+	}
+
+	private static byte[] createPanField(String pan) {
+		if (!PAN_PATTERN.matcher(pan).matches()) {
+			throw new IllegalArgumentException("Invalid PAN: " + pan);
+		}
+
+		int panLength = pan.length();
+
+		String controlField = Integer.toString(panLength < PAN_BASE_LENGTH ? 0 : panLength - PAN_BASE_LENGTH);
+		int leftPaddingLength = panLength < PAN_BASE_LENGTH ? PAN_BASE_LENGTH - panLength : 0;
+		int rightPaddingLength = 31 - (leftPaddingLength + panLength);
+
+		CharBuffer hex = CharBuffer.allocate(32)
+			.append(controlField)
+			.append(PAN_PAD_DIGIT.repeat(leftPaddingLength))
+			.append(pan)
+			.append(PAN_PAD_DIGIT.repeat(rightPaddingLength))
+			.flip();
+
+		return HexFormat.parseHex(hex);
+	}
+
+	private static byte[] xor(byte[] b1, byte[] b2) {
+		byte[] result = new byte[b1.length];
+		for (int i = 0; i < b1.length; i++) {
+			result[i] = (byte) (b1[i] ^ b2[i]);
+		}
+		return result;
+	}
+
 	public static class Encoder {
-
-		private static final Pattern PIN_PATTERN = Pattern.compile("\\d{4,12}");
-
-		private static final char PIN_CONTROL_FIELD = '4';
-
-		private static final String PIN_FILL_DIGIT = "A";
-
-		private static final Pattern PAN_PATTERN = Pattern.compile("\\d{0,19}");
-
-		private static final int PAN_BASE_LENGTH = 12;
-
-		private static final String PAN_PAD_DIGIT = "0";
 
 		private final RandomGenerator generator;
 
-		private final Encryptor ecbEncryptor;
+		private final Encryptor encryptor;
 
-		private Encoder(RandomGenerator generator, Encryptor ecbEncryptor) {
+		private Encoder(RandomGenerator generator, Encryptor encryptor) {
 			this.generator = generator;
-			this.ecbEncryptor = ecbEncryptor;
+			this.encryptor = encryptor;
 		}
 
 		public Encoder withRandomGenerator(RandomGenerator generator) {
-			return new Encoder(generator, ecbEncryptor);
+			return new Encoder(generator, encryptor);
 		}
 
-		public byte[] encode(CharSequence pin, CharSequence pan) {
-			byte[] intermediateBlockA = ecbEncryptor.encrypt(createPinField(pin));
+		public byte[] encode(CharSequence pin, String pan) {
+			byte[] intermediateBlockA = encryptor.encrypt(createPinField(pin));
 			byte[] intermediateBlockB = xor(intermediateBlockA, createPanField(pan));
-			return ecbEncryptor.encrypt(intermediateBlockB);
+			return encryptor.encrypt(intermediateBlockB);
 		}
 
 		private byte[] createPinField(CharSequence pin) {
@@ -73,49 +106,40 @@ public class Format4 {
 			}
 
 			int pinLength = pin.length();
-			int fillingLength = 14 - pinLength;
 			byte[] randomBytes = new byte[8];
 
 			generator.nextBytes(randomBytes);
 
-			// FIXME JDK toHexString() lacks leading zeros
 			CharBuffer hex = CharBuffer.allocate(32)
 				.append(PIN_CONTROL_FIELD)
 				.append(Integer.toHexString(pinLength))
 				.append(pin)
-				.append(PIN_FILL_DIGIT.repeat(fillingLength))
-				.append(Long.toHexString(ByteBuffer.wrap(randomBytes).getLong()));
+				.append(createPinFillDigits(pinLength))
+				// FIXME Long.toHexString() lacks leading zeros
+				.append(Long.toHexString(ByteBuffer.wrap(randomBytes).getLong()).toUpperCase(Locale.ROOT))
+				.flip();
 
 			return HexFormat.parseHex(hex);
-		}
-
-		private static byte[] createPanField(CharSequence pan) {
-			if (!PAN_PATTERN.matcher(pan).matches()) {
-				throw new IllegalArgumentException("Invalid PAN: " + pan);
-			}
-
-			int panLength = pan.length();
-
-			int leftPaddingLength = panLength < PAN_BASE_LENGTH ? PAN_BASE_LENGTH - panLength : 0;
-			int rightPaddingLength = 31 - (leftPaddingLength + panLength);
-
-			CharBuffer hex = CharBuffer.allocate(32)
-				.append(Integer.toString(panLength < PAN_BASE_LENGTH ? 0 : panLength - PAN_BASE_LENGTH))
-				.append(PAN_PAD_DIGIT.repeat(leftPaddingLength))
-				.append(pan)
-				.append(PAN_PAD_DIGIT.repeat(rightPaddingLength));
-
-			return HexFormat.parseHex(hex);
-		}
-
-		private static byte[] xor(byte[] x1, byte[] x2) {
-			return null; // FIXME
 		}
 
 		public static class Builder {
 
-			public Encoder withECBMode(Encryptor ecbEncryptor) {
-				return new Encoder(SecureRandom::new, ecbEncryptor);
+			public Builder() {
+			}
+
+			public Encoder withEncryptor(Encryptor encryptor) {
+				return new Encoder(new DefaultRandomGenerator(), encryptor);
+			}
+
+			private static class DefaultRandomGenerator implements RandomGenerator {
+
+				private final SecureRandom secureRandom = new SecureRandom();
+
+				@Override
+				public void nextBytes(byte[] bytes) {
+					secureRandom.nextBytes(bytes);
+				}
+
 			}
 
 		}
@@ -124,20 +148,54 @@ public class Format4 {
 
 	public static class Decoder {
 
-		private final Decryptor ecbDecryptor;
+		private final Decryptor decryptor;
 
-		private Decoder(Decryptor ecbDecryptor) {
-			this.ecbDecryptor = ecbDecryptor;
+		private Decoder(Decryptor decryptor) {
+			this.decryptor = decryptor;
 		}
 
-		public CharBuffer decode(byte[] pinBlock, CharSequence pan) {
-			return null; // FIXME
+		public String decode(byte[] pinBlock, String pan) {
+			byte[] intermediateBlockB = decryptor.decrypt(pinBlock);
+			byte[] intermediateBlockA = xor(intermediateBlockB, createPanField(pan));
+			byte[] pinField = decryptor.decrypt(intermediateBlockA);
+
+			String hex = HexFormat.formatHex(pinField);
+
+			validatePinControlField(hex);
+			int pinLength = getPinLength(hex);
+			validatePinFillDigits(hex, pinLength);
+
+			return hex.subSequence(2, 2 + pinLength).toString();
+		}
+
+		private static void validatePinControlField(String hex) {
+			if (hex.charAt(0) != PIN_CONTROL_FIELD) {
+				throw new IllegalArgumentException("Invalid PIN control field: " + hex.charAt(0));
+			}
+		}
+
+		private static int getPinLength(CharSequence hex) {
+			int pinLength = Character.digit(hex.charAt(1), 10);
+			if (pinLength < 4 || pinLength > 12) {
+				throw new IllegalArgumentException("Invalid PIN length: " + pinLength);
+			}
+			return pinLength;
+		}
+
+		private static void validatePinFillDigits(String hex, int pinLength) {
+			String fillDigits = hex.substring(2 + pinLength, 16);
+			if (!fillDigits.equals(createPinFillDigits(pinLength))) {
+				throw new IllegalArgumentException("Invalid fill digits: " + fillDigits);
+			}
 		}
 
 		public static class Builder {
 
-			public Decoder withECBMode(Decryptor ecbDecryptor) {
-				return new Decoder(ecbDecryptor);
+			public Builder() {
+			}
+
+			public Decoder withDecryptor(Decryptor decryptor) {
+				return new Decoder(decryptor);
 			}
 
 		}
