@@ -2,7 +2,8 @@ name: CI
 
 on: [push, pull_request]
 
-permissions: {}
+permissions:
+  contents: read # FIXME delete once the repo is public
 
 env:
   MAVEN_ARGS: -B -V -ntp -e -Djansi.passthrough=true -Dstyle.color=always
@@ -11,7 +12,7 @@ jobs:
 
   java:
 
-    name: Java 21 (${{ matrix.os }})
+    name: Java 25 (${{ matrix.os }})
     strategy:
       fail-fast: false
       matrix:
