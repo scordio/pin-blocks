@@ -15,10 +15,8 @@
  */
 package io.github.scordio.pinblocks.iso9564;
 
-import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.security.SecureRandom;
-import java.util.Locale;
 import java.util.regex.Pattern;
 
 public class Format4 {

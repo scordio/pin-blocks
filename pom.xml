@@ -132,14 +132,13 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>3.11.3</version>
+          <version>3.12.0</version>
           <configuration>
             <additionalOptions>--link-modularity-mismatch=info</additionalOptions> <!-- https://github.com/jspecify/jspecify/issues/712 -->
             <failOnWarnings>true</failOnWarnings>
             <links>
               <link>https://jspecify.dev/docs/api/</link>
             </links>
-            <release>9</release>
           </configuration>
         </plugin>
         <plugin>
@@ -160,7 +159,7 @@
         <plugin>
           <groupId>org.jreleaser</groupId>
           <artifactId>jreleaser-maven-plugin</artifactId>
-          <version>1.19.0</version>
+          <version>1.20.0</version>
         </plugin>
       </plugins>
     </pluginManagement>
