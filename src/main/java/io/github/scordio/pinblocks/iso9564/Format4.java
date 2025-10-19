@@ -115,8 +115,7 @@ public class Format4 {
 				.append(Integer.toHexString(pinLength))
 				.append(pin)
 				.append(createPinFillDigits(pinLength))
-				// FIXME Long.toHexString() lacks leading zeros
-				.append(Long.toHexString(ByteBuffer.wrap(randomBytes).getLong()).toUpperCase(Locale.ROOT))
+				.append(HexFormat.formatHex(randomBytes))
 				.flip();
 
 			return HexFormat.parseHex(hex);
