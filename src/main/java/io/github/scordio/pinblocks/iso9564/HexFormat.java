@@ -27,33 +27,34 @@ class HexFormat {
 
 		byte[] bytes = new byte[length / 2];
 		for (int i = 0; i < length; i += 2) {
-			int hi = getDigit(source, i);
-			int lo = getDigit(source, i + 1);
+			int hi = getDigit(source.charAt(i));
+			int lo = getDigit(source.charAt(i + 1));
 			bytes[i / 2] = (byte) ((hi << 4) | lo);
 		}
 
 		return bytes;
 	}
 
-	private static int getDigit(CharSequence source, int index) {
-		int digit = Character.digit(source.charAt(index), 16);
+	private static int getDigit(char character) {
+		int digit = Character.digit(character, 16);
 		if (digit == -1) {
-			throw new IllegalArgumentException("Invalid hex character at position " + index);
+			throw new IllegalArgumentException("Invalid hex character: " + character);
 		}
 		return digit;
 	}
 
-	static String formatHex(byte[] source) {
+	static char[] formatHex(byte[] source) {
 		Objects.requireNonNull(source, "'null' is not supported");
 
-		StringBuilder builder = new StringBuilder(source.length * 2);
-		for (byte b : source) {
+		char[] result = new char[source.length * 2];
+		for (int i = 0; i < source.length; i++) {
+			byte b = source[i];
 			int hi = (b >> 4) & 0x0F;
 			int lo = b & 0x0F;
-			builder.append(Character.toUpperCase(Character.forDigit(hi, 16)));
-			builder.append(Character.toUpperCase(Character.forDigit(lo, 16)));
+			result[i * 2] = Character.toUpperCase(Character.forDigit(hi, 16));
+			result[i * 2 + 1] = Character.toUpperCase(Character.forDigit(lo, 16));
 		}
-		return builder.toString();
+		return result;
 	}
 
 }

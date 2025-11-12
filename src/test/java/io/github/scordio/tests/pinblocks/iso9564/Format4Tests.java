@@ -44,6 +44,7 @@ class Format4Tests {
 
 	@ParameterizedTest
 	@CsvSource({ //
+			"32D4E29C54B2075B86DF599A776C3FA5, 000000, 123456", //
 			"67153CBAA99D8D53ABD15C45C8CEAB01, 000000, 123456", //
 			"F7542CEDC3EE4435CE43A2CAC8B26A19, 000000, 123456" //
 	})
@@ -52,10 +53,10 @@ class Format4Tests {
 		Decoder underTest = Format4.decoder().withDecryptor(AES_ECB);
 
 		// When
-		CharSequence pin = underTest.decode(pinBlock, pan);
+		char[] pin = underTest.decode(pinBlock, pan);
 
 		// Then
-		then(pin.toString()).isEqualTo(expected);
+		then(new String(pin)).isEqualTo(expected);
 	}
 
 }

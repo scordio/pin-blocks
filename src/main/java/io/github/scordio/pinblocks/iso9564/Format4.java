@@ -17,6 +17,7 @@ package io.github.scordio.pinblocks.iso9564;
 
 import java.nio.CharBuffer;
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.regex.Pattern;
 
 public class Format4 {
@@ -113,7 +114,7 @@ public class Format4 {
 				.append(Integer.toHexString(pinLength))
 				.append(pin)
 				.append(createPinFillDigits(pinLength))
-				.append(HexFormat.formatHex(randomBytes))
+				.put(HexFormat.formatHex(randomBytes))
 				.flip();
 
 			return HexFormat.parseHex(hex);
@@ -151,36 +152,36 @@ public class Format4 {
 			this.decryptor = decryptor;
 		}
 
-		public String decode(byte[] pinBlock, String pan) {
+		public char[] decode(byte[] pinBlock, String pan) {
 			byte[] intermediateBlockB = decryptor.decrypt(pinBlock);
 			byte[] intermediateBlockA = xor(intermediateBlockB, createPanField(pan));
 			byte[] pinField = decryptor.decrypt(intermediateBlockA);
 
-			String hex = HexFormat.formatHex(pinField);
+			char[] hex = HexFormat.formatHex(pinField);
 
 			validatePinControlField(hex);
 			int pinLength = getPinLength(hex);
 			validatePinFillDigits(hex, pinLength);
 
-			return hex.subSequence(2, 2 + pinLength).toString();
+			return Arrays.copyOfRange(hex, 2, 2 + pinLength);
 		}
 
-		private static void validatePinControlField(String hex) {
-			if (hex.charAt(0) != PIN_CONTROL_FIELD) {
-				throw new IllegalArgumentException("Invalid PIN control field: " + hex.charAt(0));
+		private static void validatePinControlField(char[] hex) {
+			if (hex[0] != PIN_CONTROL_FIELD) {
+				throw new IllegalArgumentException("Invalid PIN control field: " + hex[0]);
 			}
 		}
 
-		private static int getPinLength(CharSequence hex) {
-			int pinLength = Character.digit(hex.charAt(1), 10);
+		private static int getPinLength(char[] hex) {
+			int pinLength = Character.digit(hex[1], 10);
 			if (pinLength < 4 || pinLength > 12) {
 				throw new IllegalArgumentException("Invalid PIN length: " + pinLength);
 			}
 			return pinLength;
 		}
 
-		private static void validatePinFillDigits(String hex, int pinLength) {
-			String fillDigits = hex.substring(2 + pinLength, 16);
+		private static void validatePinFillDigits(char[] hex, int pinLength) {
+			String fillDigits = new String(hex, 2 + pinLength, 14 - pinLength);
 			if (!fillDigits.equals(createPinFillDigits(pinLength))) {
 				throw new IllegalArgumentException("Invalid fill digits: " + fillDigits);
 			}
