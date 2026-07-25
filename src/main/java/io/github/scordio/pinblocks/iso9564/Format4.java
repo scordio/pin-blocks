@@ -173,7 +173,7 @@ public class Format4 {
 		}
 
 		private static int getPinLength(char[] hex) {
-			int pinLength = Character.digit(hex[1], 10);
+			int pinLength = Character.digit(hex[1], 16);
 			if (pinLength < 4 || pinLength > 12) {
 				throw new IllegalArgumentException("Invalid PIN length: " + pinLength);
 			}

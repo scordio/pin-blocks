@@ -19,18 +19,24 @@ import io.github.scordio.junit.converters.Hex;
 import io.github.scordio.pinblocks.iso9564.Format4;
 import io.github.scordio.pinblocks.iso9564.Format4.Decoder;
 import io.github.scordio.pinblocks.iso9564.Format4.Encoder;
+import io.github.scordio.pinblocks.iso9564.RandomGenerator;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+
+import java.util.Arrays;
 
 import static io.github.scordio.tests.pinblocks.iso9564.Cipher.AES_ECB;
 import static org.assertj.core.api.BDDAssertions.then;
 
 class Format4Tests {
 
+	private static final RandomGenerator ALWAYS_ZEROS = bytes -> Arrays.fill(bytes, (byte) 0x00);
+
 	@ParameterizedTest
-	@CsvSource({ //
-			"123456, 000000" //
-	})
+	@CsvSource(textBlock = """
+			123456,     000000
+			1234567890, 000000
+			""")
 	void encode(CharSequence pin, String pan) {
 		// Given
 		Encoder underTest = Format4.encoder().withEncryptor(AES_ECB);
@@ -40,14 +46,34 @@ class Format4Tests {
 
 		// Then
 		then(pinBlock).hasSize(16);
+
+		Decoder decoder = Format4.decoder().withDecryptor(AES_ECB);
+		then(new String(decoder.decode(pinBlock, pan)).contentEquals(pin)).isTrue();
 	}
 
 	@ParameterizedTest
-	@CsvSource({ //
-			"32D4E29C54B2075B86DF599A776C3FA5, 000000, 123456", //
-			"67153CBAA99D8D53ABD15C45C8CEAB01, 000000, 123456", //
-			"F7542CEDC3EE4435CE43A2CAC8B26A19, 000000, 123456" //
-	})
+	@CsvSource(textBlock = """
+			123456,     000000, 5235DF2C339E3994438AF0F4C38EC09E
+			1234567890, 000000, D4A078176793C816536DA07B87F4493E
+			""")
+	void encode_with_custom_random_generator(CharSequence pin, String pan, @Hex byte[] expected) {
+		// Given
+		Encoder underTest = Format4.encoder().withEncryptor(AES_ECB).withRandomGenerator(ALWAYS_ZEROS);
+
+		// When
+		byte[] pinBlock = underTest.encode(pin, pan);
+
+		// Then
+		then(pinBlock).isEqualTo(expected);
+	}
+
+	@ParameterizedTest
+	@CsvSource(textBlock = """
+			32D4E29C54B2075B86DF599A776C3FA5, 000000, 123456
+			5235DF2C339E3994438AF0F4C38EC09E, 000000, 123456
+			49EC78119A8E6D7F91F986063F4C1D57, 000000, 1234567890
+			D4A078176793C816536DA07B87F4493E, 000000, 1234567890
+			""")
 	void decode(@Hex byte[] pinBlock, String pan, String expected) {
 		// Given
 		Decoder underTest = Format4.decoder().withDecryptor(AES_ECB);
