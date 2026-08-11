@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-/**
- *
- */
-@NullMarked
+@NullUnmarked
 package io.github.scordio.tests.pinblocks.iso9564;
 
-import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.NullUnmarked;
