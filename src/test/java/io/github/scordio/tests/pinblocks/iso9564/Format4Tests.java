@@ -26,11 +26,10 @@ import org.junit.jupiter.params.provider.CsvSource;
 import java.util.Arrays;
 
 import static io.github.scordio.tests.pinblocks.iso9564.Cipher.AES_ECB;
+import static org.assertj.core.api.BDDAssertions.catchException;
 import static org.assertj.core.api.BDDAssertions.then;
 
 class Format4Tests {
-
-	private static final RandomGenerator ALWAYS_ZEROS = bytes -> Arrays.fill(bytes, (byte) 0x00);
 
 	@ParameterizedTest
 	@CsvSource(textBlock = """
@@ -58,7 +57,8 @@ class Format4Tests {
 			""")
 	void encode_with_custom_random_generator(CharSequence pin, String pan, @Hex byte[] expected) {
 		// Given
-		Encoder underTest = Format4.encoder().withEncryptor(AES_ECB).withRandomGenerator(ALWAYS_ZEROS);
+		RandomGenerator alwaysZeros = bytes -> Arrays.fill(bytes, (byte) 0x00);
+		Encoder underTest = Format4.encoder().withEncryptor(AES_ECB).withRandomGenerator(alwaysZeros);
 
 		// When
 		byte[] pinBlock = underTest.encode(pin, pan);
@@ -83,6 +83,54 @@ class Format4Tests {
 
 		// Then
 		then(new String(pin)).isEqualTo(expected);
+	}
+
+	@ParameterizedTest
+	@CsvSource(textBlock = """
+			123
+			123X
+			""")
+	void encode_fails_with_invalid_pin(CharSequence pin) {
+		// Given
+		Encoder underTest = Format4.encoder().withEncryptor(AES_ECB);
+
+		// When
+		Exception exception = catchException(() -> underTest.encode(pin, "000000"));
+
+		// Then
+		then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid PIN");
+	}
+
+	@ParameterizedTest
+	@CsvSource(textBlock = """
+			12A4
+			12345678901234567890
+			""")
+	void encode_fails_with_invalid_pan(String pan) {
+		// Given
+		Encoder underTest = Format4.encoder().withEncryptor(AES_ECB);
+
+		// When
+		Exception exception = catchException(() -> underTest.encode("1234", pan));
+
+		// Then
+		then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid PAN");
+	}
+
+	@ParameterizedTest
+	@CsvSource(textBlock = """
+			# PIN: 34AAAAAA
+			60F96E147DC14762A711A020086A3042, 000000
+			""")
+	void decode_fails_with_non_decimal_pin_digits(@Hex byte[] pinBlock, String pan) {
+		// Given
+		Decoder underTest = Format4.decoder().withDecryptor(AES_ECB);
+
+		// When
+		Exception exception = catchException(() -> underTest.decode(pinBlock, pan));
+
+		// Then
+		then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid PIN digit");
 	}
 
 }

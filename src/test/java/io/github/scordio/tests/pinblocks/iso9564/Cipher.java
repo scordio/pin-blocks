@@ -17,11 +17,13 @@ package io.github.scordio.tests.pinblocks.iso9564;
 
 import io.github.scordio.pinblocks.iso9564.Decryptor;
 import io.github.scordio.pinblocks.iso9564.Encryptor;
+import org.jspecify.annotations.NullMarked;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.GeneralSecurityException;
 
+@NullMarked
 enum Cipher implements Encryptor, Decryptor {
 
 	AES_ECB("AES/ECB/NoPadding");

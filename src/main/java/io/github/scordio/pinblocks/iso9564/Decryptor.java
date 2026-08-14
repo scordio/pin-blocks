@@ -15,9 +15,27 @@
  */
 package io.github.scordio.pinblocks.iso9564;
 
+/**
+ * Decrypts a block of data as part of PIN block decoding.
+ * <p>
+ * This abstraction is context-agnostic: it defines no specific cipher or block size. The
+ * expected input/output length and cryptographic algorithm are determined by the calling
+ * context.
+ *
+ * @see Format4.Decoder.Builder#withDecryptor(Decryptor)
+ */
 @FunctionalInterface
 public interface Decryptor {
 
+	/**
+	 * Decrypts the given bytes.
+	 * <p>
+	 * Implementations should not make any assumptions about how the returned byte array
+	 * will be used by callers, including whether it may be retained, modified, or zeroed
+	 * after return.
+	 * @param input the bytes to decrypt; never {@code null}
+	 * @return the decrypted bytes; never {@code null}
+	 */
 	byte[] decrypt(byte[] input);
 
 }

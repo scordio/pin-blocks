@@ -15,9 +15,25 @@
  */
 package io.github.scordio.pinblocks.iso9564;
 
+/**
+ * Generates random bytes as part of PIN block encoding.
+ * <p>
+ * This abstraction is context-agnostic: it defines no specific source of randomness. The
+ * required length is determined by the calling context via the size of the supplied
+ * array.
+ *
+ * @see Format4.Encoder.Builder#withRandomGenerator(RandomGenerator)
+ */
 @FunctionalInterface
 public interface RandomGenerator {
 
+	/**
+	 * Fills the given array with random bytes.
+	 * <p>
+	 * Implementations must provide cryptographically secure random bytes suitable for
+	 * sensitive operations, and must fill the entire array.
+	 * @param bytes the array to fill with random bytes; never {@code null}
+	 */
 	void nextBytes(byte[] bytes);
 
 }
