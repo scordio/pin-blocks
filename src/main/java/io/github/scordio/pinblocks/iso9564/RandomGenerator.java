@@ -22,7 +22,7 @@ package io.github.scordio.pinblocks.iso9564;
  * required length is determined by the calling context via the size of the supplied
  * array.
  *
- * @see Format4.Encoder.Builder#withRandomGenerator(RandomGenerator)
+ * @see Format4.Encoder#withRandomGenerator(RandomGenerator)
  */
 @FunctionalInterface
 public interface RandomGenerator {

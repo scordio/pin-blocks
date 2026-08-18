@@ -31,8 +31,8 @@ public interface Decryptor {
 	 * Decrypts the given bytes.
 	 * <p>
 	 * Implementations should not make any assumptions about how the returned byte array
-	 * will be used by callers, including whether it may be retained, modified, or zeroed
-	 * after return.
+	 * will be used, including whether it may be retained, modified, or zeroed after
+	 * return.
 	 * @param input the bytes to decrypt; never {@code null}
 	 * @return the decrypted bytes; never {@code null}
 	 */

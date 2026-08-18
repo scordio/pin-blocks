@@ -22,6 +22,11 @@ import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
 
+/**
+ * This class consists exclusively of static methods for obtaining encoders and decoders
+ * for the Format 4 PIN block, as specified in
+ * <a href="https://www.iso.org/standard/68669.html">ISO 9564-1:2017</a>.
+ */
 public class Format4 {
 
 	private static final int BLOCK_LENGTH_BYTES = 16;
@@ -39,10 +44,18 @@ public class Format4 {
 	private Format4() {
 	}
 
+	/**
+	 * Returns a builder for a Format 4 {@link Encoder Encoder}.
+	 * @return the builder for a Format 4 encoder
+	 */
 	public static Encoder.Builder encoder() {
 		return new Encoder.Builder();
 	}
 
+	/**
+	 * Returns a builder for a Format 4 {@link Decoder Decoder}.
+	 * @return the builder for a Format 4 decoder
+	 */
 	public static Decoder.Builder decoder() {
 		return new Decoder.Builder();
 	}
@@ -115,6 +128,15 @@ public class Format4 {
 		return value;
 	}
 
+	/**
+	 * Encoder for the Format 4 PIN block.
+	 * <p>
+	 * Requires an {@link Encryptor} that uses AES in ECB mode, and, optionally, a
+	 * {@link RandomGenerator}.
+	 * <p>
+	 * {@link Encoder} instances are thread-safe as long as the supplied {@link Encryptor}
+	 * and {@link RandomGenerator} are also thread-safe.
+	 */
 	public static class Encoder {
 
 		private final RandomGenerator generator;
@@ -127,15 +149,23 @@ public class Format4 {
 		}
 
 		/**
-		 * Creates a new encoder that uses the given random generator instead of the
-		 * default {@link SecureRandom}-based one.
+		 * Returns an encoder instance that encrypts equivalently to this one, but uses
+		 * the given random generator instead of the default one based on
+		 * {@link SecureRandom}.
 		 * @param generator the random generator to use; never {@code null}
-		 * @return the configured encoder
+		 * @return an equivalent encoder that uses the given random generator
 		 */
 		public Encoder withRandomGenerator(RandomGenerator generator) {
 			return new Encoder(generator, encryptor);
 		}
 
+		/**
+		 * Encodes the given PIN and PAN in a PIN block.
+		 * @param pin the PIN to encode, consisting of 4 to 12 digits; never {@code null}
+		 * @param pan the PAN associated with the PIN, consisting of up to 19 digits;
+		 * never {@code null}
+		 * @return the encoded PIN block
+		 */
 		public byte[] encode(CharSequence pin, String pan) {
 			byte[] pinField = null;
 			byte[] panField = null;
@@ -189,19 +219,23 @@ public class Format4 {
 			}
 		}
 
+		/**
+		 * A builder for {@link Encoder} instances.
+		 */
 		public static class Builder {
 
-			public Builder() {
+			private Builder() {
 			}
 
 			/**
-			 * Creates a new encoder that uses the given encryptor.
+			 * Creates a new encoder that uses the given encryptor and a random generator
+			 * based on {@link SecureRandom}.
 			 * <p>
-			 * The encryptor must use the AES-ECB algorithm and operate on 16-byte
-			 * (128-bit) blocks.
+			 * The encryptor must use AES in ECB mode, operating on 16-byte (128-bit)
+			 * blocks.
 			 * <p>
-			 * A {@link SecureRandom}-based random generator is used by default; use
-			 * {@link Encoder#withRandomGenerator(RandomGenerator)} to override it.
+			 * To override the random generator, use
+			 * {@link Encoder#withRandomGenerator(RandomGenerator)}.
 			 * @param encryptor the encryptor to use; never {@code null}
 			 * @return the configured encoder
 			 */
@@ -224,6 +258,14 @@ public class Format4 {
 
 	}
 
+	/**
+	 * Decoder for the Format 4 PIN block.
+	 * <p>
+	 * Requires a {@link Decryptor} that uses AES in ECB mode.
+	 * <p>
+	 * {@link Decoder} instances are thread-safe as long as the supplied {@link Decryptor}
+	 * is also thread-safe.
+	 */
 	public static class Decoder {
 
 		private final Decryptor decryptor;
@@ -232,6 +274,14 @@ public class Format4 {
 			this.decryptor = Objects.requireNonNull(decryptor, "'decryptor' must not be null");
 		}
 
+		/**
+		 * Decodes the given Format 4 PIN block with the given PAN, returning the PIN
+		 * value.
+		 * @param pinBlock the PIN block to decode; never {@code null}
+		 * @param pan the PAN associated with the PIN block, consisting of up to 19
+		 * digits; never {@code null}
+		 * @return the decoded PIN
+		 */
 		public char[] decode(byte[] pinBlock, String pan) {
 			requireBlock(pinBlock);
 
@@ -301,16 +351,19 @@ public class Format4 {
 			}
 		}
 
+		/**
+		 * A builder for {@link Decoder} instances.
+		 */
 		public static class Builder {
 
-			public Builder() {
+			private Builder() {
 			}
 
 			/**
 			 * Creates a new decoder that uses the given decryptor.
 			 * <p>
-			 * The decryptor must use the AES-ECB algorithm and operate on 16-byte
-			 * (128-bit) blocks.
+			 * The decryptor must use AES in ECB mode, operating on 16-byte (128-bit)
+			 * blocks.
 			 * @param decryptor the decryptor to use; never {@code null}
 			 * @return the configured decoder
 			 */
