@@ -15,7 +15,7 @@
  */
 
 /**
- *
+ * Encoders and decoders for ISO 9564-1 PIN block formats.
  */
 module io.github.scordio.pinblocks {
 

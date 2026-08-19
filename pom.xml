@@ -7,7 +7,7 @@
   <version>0.1.0-SNAPSHOT</version>
 
   <name>PIN Blocks</name>
-  <description>Collection of PIN block formatters</description>
+  <description>Encoders and decoders for ISO 9564-1 PIN block formats</description>
   <url>https://github.com/scordio/pin-blocks</url>
   <inceptionYear>2025</inceptionYear>
   <licenses>
