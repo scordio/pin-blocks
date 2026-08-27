@@ -25,7 +25,24 @@
       <email>stefano.cordio@gmail.com</email>
       <url>https://github.com/scordio</url>
     </developer>
-    <!-- FIXME add others -->
+    <developer>
+      <id>KarolyNevelos</id>
+      <name>Károly Nevelős</name>
+      <email>karoly.nevelos@gmail.com</email>
+      <url>https://github.com/KarolyNevelos</url>
+    </developer>
+    <developer>
+      <id>lkrajcsovicz</id>
+      <name>László Krajcsovicz</name>
+      <email>lkrajcsovicz@gmail.com</email>
+      <url>https://github.com/lkrajcsovicz</url>
+    </developer>
+    <developer>
+      <id>skazsi</id>
+      <name>Krisztián Zsolt Sallai</name>
+      <email>skazsi@gmail.com</email>
+      <url>https://github.com/skazsi</url>
+    </developer>
   </developers>
 
   <scm>
