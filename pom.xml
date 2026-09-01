@@ -97,7 +97,6 @@
           <version>3.15.0</version>
           <configuration>
             <compilerArgs>
-              <compilerArg>-Xlint:all,-options</compilerArg>
               <compilerArg>-parameters</compilerArg>
               <compilerArg>-Xlint:all,-options</compilerArg>
               <!-- https://errorprone.info/docs/installation#maven -->
