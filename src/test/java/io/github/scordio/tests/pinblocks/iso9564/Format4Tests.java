@@ -20,8 +20,10 @@ import io.github.scordio.pinblocks.iso9564.Format4;
 import io.github.scordio.pinblocks.iso9564.Format4.Decoder;
 import io.github.scordio.pinblocks.iso9564.Format4.Encoder;
 import io.github.scordio.pinblocks.iso9564.RandomGenerator;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.Arrays;
 
@@ -31,161 +33,177 @@ import static org.assertj.core.api.BDDAssertions.then;
 
 class Format4Tests {
 
-	@ParameterizedTest
-	@CsvSource(textBlock = """
-			123456, 000000
-			123456, 123456789012
-			123456, 1234567890123
-			123456, 1234567890123456789
-			""")
-	void encode_should_succeed(CharSequence pin, String pan) {
-		// Given
-		Encoder underTest = Format4.encoder().withEncryptor(AES_ECB);
+	@Nested
+	class Encode {
 
-		// When
-		byte[] pinBlock = underTest.encode(pin, pan);
+		private final Encoder underTest = Format4.encoder().withEncryptor(AES_ECB);
 
-		// Then
-		then(pinBlock).hasSize(16);
+		@ParameterizedTest
+		@ValueSource(strings = { "1234", "123456789012" })
+		void should_succeed_with_valid_pin(CharSequence pin) {
+			// Given
+			String pan = "";
 
-		Decoder decoder = Format4.decoder().withDecryptor(AES_ECB);
-		then(new String(decoder.decode(pinBlock, pan)).contentEquals(pin)).isTrue();
+			// When
+			byte[] pinBlock = underTest.encode(pin, pan);
+
+			// Then
+			then(pinBlock).hasSize(16);
+
+			Decoder decoder = Format4.decoder().withDecryptor(AES_ECB);
+			then(new String(decoder.decode(pinBlock, pan))).isEqualTo(pin);
+		}
+
+		@ParameterizedTest
+		@ValueSource(strings = { "", "1", "12345678901", "123456789012", "1234567890123456789" })
+		void should_succeed_with_valid_pan(String pan) {
+			// Given
+			CharSequence pin = "1234";
+
+			// When
+			byte[] pinBlock = underTest.encode(pin, pan);
+
+			// Then
+			then(pinBlock).hasSize(16);
+
+			Decoder decoder = Format4.decoder().withDecryptor(AES_ECB);
+			then(new String(decoder.decode(pinBlock, pan))).isEqualTo(pin);
+		}
+
+		@ParameterizedTest
+		@CsvSource(textBlock = """
+				123456, 000000,              5235DF2C339E3994438AF0F4C38EC09E
+				123456, 123456789012,        B80C1E4CFC6C801F08C4540521AA14E4
+				123456, 1234567890123,       8C973F18F40FBF649F69944353B48BA5
+				123456, 1234567890123456789, 24F7109DD6C824CCCFB0B1D004313361
+				""")
+		void should_succeed_with_custom_random_generator(CharSequence pin, String pan, @Hex byte[] expected) {
+			// Given
+			RandomGenerator alwaysZeros = bytes -> Arrays.fill(bytes, (byte) 0x00);
+			Encoder underTest = this.underTest.withRandomGenerator(alwaysZeros);
+
+			// When
+			byte[] pinBlock = underTest.encode(pin, pan);
+
+			// Then
+			then(pinBlock).isEqualTo(expected);
+		}
+
+		@ParameterizedTest
+		@ValueSource(strings = { "123", "123A", "1234567890123" })
+		void should_fail_if_pin_is_invalid(CharSequence pin) {
+			// Given
+			String pan = "";
+
+			// When
+			Exception exception = catchException(() -> underTest.encode(pin, pan));
+
+			// Then
+			then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid PIN");
+		}
+
+		@ParameterizedTest
+		@ValueSource(strings = { "A", "12345678901234567890" })
+		void should_fail_if_pan_is_invalid(String pan) {
+			// Given
+			String pin = "1234";
+
+			// When
+			Exception exception = catchException(() -> underTest.encode(pin, pan));
+
+			// Then
+			then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid PAN");
+		}
+
 	}
 
-	@ParameterizedTest
-	@CsvSource(textBlock = """
-			123456, 000000,              5235DF2C339E3994438AF0F4C38EC09E
-			123456, 123456789012,        B80C1E4CFC6C801F08C4540521AA14E4
-			123456, 1234567890123,       8C973F18F40FBF649F69944353B48BA5
-			123456, 1234567890123456789, 24F7109DD6C824CCCFB0B1D004313361
-			""")
-	void encode_should_succeed_with_custom_random_generator(CharSequence pin, String pan, @Hex byte[] expected) {
-		// Given
-		RandomGenerator alwaysZeros = bytes -> Arrays.fill(bytes, (byte) 0x00);
-		Encoder underTest = Format4.encoder().withEncryptor(AES_ECB).withRandomGenerator(alwaysZeros);
+	@Nested
+	class Decode {
 
-		// When
-		byte[] pinBlock = underTest.encode(pin, pan);
+		@ParameterizedTest
+		@CsvSource(textBlock = """
+				32D4E29C54B2075B86DF599A776C3FA5, 000000,              123456
+				5235DF2C339E3994438AF0F4C38EC09E, 000000,              123456
+				B80C1E4CFC6C801F08C4540521AA14E4, 123456789012,        123456
+				8C973F18F40FBF649F69944353B48BA5, 1234567890123,       123456
+				24F7109DD6C824CCCFB0B1D004313361, 1234567890123456789, 123456
+				""")
+		void should_succeed(@Hex byte[] pinBlock, String pan, String expected) {
+			// Given
+			Decoder underTest = Format4.decoder().withDecryptor(AES_ECB);
 
-		// Then
-		then(pinBlock).isEqualTo(expected);
-	}
+			// When
+			char[] pin = underTest.decode(pinBlock, pan);
 
-	@ParameterizedTest
-	@CsvSource(textBlock = """
-			32D4E29C54B2075B86DF599A776C3FA5, 000000,              123456
-			5235DF2C339E3994438AF0F4C38EC09E, 000000,              123456
-			B80C1E4CFC6C801F08C4540521AA14E4, 123456789012,        123456
-			8C973F18F40FBF649F69944353B48BA5, 1234567890123,       123456
-			24F7109DD6C824CCCFB0B1D004313361, 1234567890123456789, 123456
-			""")
-	void decode_should_succeed(@Hex byte[] pinBlock, String pan, String expected) {
-		// Given
-		Decoder underTest = Format4.decoder().withDecryptor(AES_ECB);
+			// Then
+			then(new String(pin)).isEqualTo(expected);
+		}
 
-		// When
-		char[] pin = underTest.decode(pinBlock, pan);
+		@ParameterizedTest
+		@ValueSource(strings = { //
+				"F4F2E1D19FCCDC7CAF41A520D18A96F3" // PIN control field: 3
+		})
+		void should_fail_if_pin_control_field_is_invalid(@Hex byte[] pinBlock) {
+			// Given
+			String pan = "000000";
+			Decoder underTest = Format4.decoder().withDecryptor(AES_ECB);
 
-		// Then
-		then(new String(pin)).isEqualTo(expected);
-	}
+			// When
+			Exception exception = catchException(() -> underTest.decode(pinBlock, pan));
 
-	@ParameterizedTest
-	@CsvSource(textBlock = """
-			123
-			123X
-			""")
-	void encode_should_fail_if_pin_is_invalid(CharSequence pin) {
-		// Given
-		Encoder underTest = Format4.encoder().withEncryptor(AES_ECB);
+			// Then
+			then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid PIN control field");
+		}
 
-		// When
-		Exception exception = catchException(() -> underTest.encode(pin, "000000"));
+		@ParameterizedTest
+		@ValueSource(strings = { //
+				"ABE837E8DC3AA1E678662CD3F33B6D6E", // PIN length: 3
+				"4F30822DDC9AACDB95DB1D480FCAB06D", // PIN length: 13
+		})
+		void should_fail_if_pin_length_is_invalid(@Hex byte[] pinBlock) {
+			// Given
+			String pan = "000000";
+			Decoder underTest = Format4.decoder().withDecryptor(AES_ECB);
 
-		// Then
-		then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid PIN");
-	}
+			// When
+			Exception exception = catchException(() -> underTest.decode(pinBlock, pan));
 
-	@ParameterizedTest
-	@CsvSource(textBlock = """
-			12A4
-			12345678901234567890
-			""")
-	void encode_should_fail_if_pan_is_invalid(String pan) {
-		// Given
-		Encoder underTest = Format4.encoder().withEncryptor(AES_ECB);
+			// Then
+			then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid PIN length");
+		}
 
-		// When
-		Exception exception = catchException(() -> underTest.encode("1234", pan));
+		@ParameterizedTest
+		@ValueSource(strings = { //
+				"193B29D12E2039FAB36DD78F4626A97F" // Fill digits: AAAAAAAB
+		})
+		void should_fail_if_fill_digits_are_invalid(@Hex byte[] pinBlock) {
+			// Given
+			String pan = "000000";
+			Decoder underTest = Format4.decoder().withDecryptor(AES_ECB);
 
-		// Then
-		then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid PAN");
-	}
+			// When
+			Exception exception = catchException(() -> underTest.decode(pinBlock, pan));
 
-	@ParameterizedTest
-	@CsvSource(textBlock = """
-			# PIN control field: 3
-			F4F2E1D19FCCDC7CAF41A520D18A96F3, 000000
-			""")
-	void decode_should_fail_if_pin_control_field_is_invalid(@Hex byte[] pinBlock, String pan) {
-		// Given
-		Decoder underTest = Format4.decoder().withDecryptor(AES_ECB);
+			// Then
+			then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid fill digits");
+		}
 
-		// When
-		Exception exception = catchException(() -> underTest.decode(pinBlock, pan));
+		@ParameterizedTest
+		@ValueSource(strings = { //
+				"2590B13382E284FAEA90D002269E01F4" // PIN: 12345A
+		})
+		void should_fail_if_pin_contains_non_decimal_digits(@Hex byte[] pinBlock) {
+			// Given
+			String pan = "000000";
+			Decoder underTest = Format4.decoder().withDecryptor(AES_ECB);
 
-		// Then
-		then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid PIN control field");
-	}
+			// When
+			Exception exception = catchException(() -> underTest.decode(pinBlock, pan));
 
-	@ParameterizedTest
-	@CsvSource(textBlock = """
-			# PIN length: 3
-			ABE837E8DC3AA1E678662CD3F33B6D6E, 000000
-			# PIN length: 13
-			4F30822DDC9AACDB95DB1D480FCAB06D, 000000
-			""")
-	void decode_should_fail_if_pin_length_is_invalid(@Hex byte[] pinBlock, String pan) {
-		// Given
-		Decoder underTest = Format4.decoder().withDecryptor(AES_ECB);
+			// Then
+			then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid PIN digit");
+		}
 
-		// When
-		Exception exception = catchException(() -> underTest.decode(pinBlock, pan));
-
-		// Then
-		then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid PIN length");
-	}
-
-	@ParameterizedTest
-	@CsvSource(textBlock = """
-			# Fill digits: AAAAAAAB
-			193B29D12E2039FAB36DD78F4626A97F, 000000
-			""")
-	void decode_should_fail_if_fill_digits_are_invalid(@Hex byte[] pinBlock, String pan) {
-		// Given
-		Decoder underTest = Format4.decoder().withDecryptor(AES_ECB);
-
-		// When
-		Exception exception = catchException(() -> underTest.decode(pinBlock, pan));
-
-		// Then
-		then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid fill digits");
-	}
-
-	@ParameterizedTest
-	@CsvSource(textBlock = """
-			# PIN: 12345A
-			2590B13382E284FAEA90D002269E01F4, 000000
-			""")
-	void decode_should_fail_if_pin_contains_non_decimal_digits(@Hex byte[] pinBlock, String pan) {
-		// Given
-		Decoder underTest = Format4.decoder().withDecryptor(AES_ECB);
-
-		// When
-		Exception exception = catchException(() -> underTest.decode(pinBlock, pan));
-
-		// Then
-		then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid PIN digit");
 	}
 
 }
