@@ -152,7 +152,7 @@ public class Format4 {
 		 * Returns an encoder instance that encrypts equivalently to this one, but uses
 		 * the given random generator instead of the default one based on
 		 * {@link SecureRandom}.
-		 * @param generator the random generator to use; never {@code null}
+		 * @param generator the random generator to use; must not be {@code null}
 		 * @return an equivalent encoder that uses the given random generator
 		 */
 		public Encoder withRandomGenerator(RandomGenerator generator) {
@@ -161,9 +161,10 @@ public class Format4 {
 
 		/**
 		 * Encodes the given PIN and PAN in a PIN block.
-		 * @param pin the PIN to encode, consisting of 4 to 12 digits; never {@code null}
-		 * @param pan the PAN associated with the PIN, consisting of up to 19 digits;
-		 * never {@code null}
+		 * @param pin the PIN to encode, consisting of 4 to 12 digits; must not be
+		 * {@code null}
+		 * @param pan the PAN associated with the PIN, consisting of up to 19 digits; must
+		 * not be {@code null}
 		 * @return the encoded PIN block
 		 */
 		public byte[] encode(CharSequence pin, String pan) {
@@ -236,7 +237,7 @@ public class Format4 {
 			 * <p>
 			 * To override the random generator, use
 			 * {@link Encoder#withRandomGenerator(RandomGenerator)}.
-			 * @param encryptor the encryptor to use; never {@code null}
+			 * @param encryptor the encryptor to use; must not be {@code null}
 			 * @return the configured encoder
 			 */
 			public Encoder withEncryptor(Encryptor encryptor) {
@@ -277,13 +278,13 @@ public class Format4 {
 		/**
 		 * Decodes the given Format 4 PIN block with the given PAN, returning the PIN
 		 * value.
-		 * @param pinBlock the PIN block to decode; never {@code null}
+		 * @param pinBlock the PIN block to decode; must not be {@code null}
 		 * @param pan the PAN associated with the PIN block, consisting of up to 19
-		 * digits; never {@code null}
+		 * digits; must not be {@code null}
 		 * @return the decoded PIN
 		 */
 		public char[] decode(byte[] pinBlock, String pan) {
-			requireBlock(pinBlock);
+			requireBlock(Objects.requireNonNull(pinBlock, "'pinBlock' must not be null"));
 
 			byte[] intermediateBlockB = null;
 			byte[] panField = null;
@@ -364,7 +365,7 @@ public class Format4 {
 			 * <p>
 			 * The decryptor must use AES in ECB mode, operating on 16-byte (128-bit)
 			 * blocks.
-			 * @param decryptor the decryptor to use; never {@code null}
+			 * @param decryptor the decryptor to use; must not be {@code null}
 			 * @return the configured decoder
 			 */
 			public Decoder withDecryptor(Decryptor decryptor) {

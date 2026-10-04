@@ -31,9 +31,9 @@ public interface Decryptor {
 	 * Decrypts the given bytes.
 	 * <p>
 	 * Implementations must return a new, independent array, leaving the input unmodified
-	 * and never returning the same instance, and should not make any assumptions about
-	 * how the returned array will be used afterward, including whether it may be
-	 * retained, modified, or zeroed.
+	 * and never returning the same instance. No assumptions should be made about how the
+	 * returned array will be used afterward, including whether it may be retained,
+	 * modified, or zeroed.
 	 * @param input the bytes to decrypt; never {@code null}
 	 * @return the decrypted bytes; never {@code null}
 	 */

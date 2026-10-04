@@ -31,9 +31,9 @@ public interface Encryptor {
 	 * Encrypts the given bytes.
 	 * <p>
 	 * Implementations must return a new, independent array, leaving the input unmodified
-	 * and never returning the same instance, and should not make any assumptions about
-	 * how the returned array will be used afterward, including whether it may be
-	 * retained, modified, or zeroed.
+	 * and never returning the same instance. No assumptions should be made about how the
+	 * returned array will be used afterward, including whether it may be retained,
+	 * modified, or zeroed.
 	 * @param input the bytes to encrypt; never {@code null}
 	 * @return the encrypted bytes; never {@code null}
 	 */

@@ -16,16 +16,21 @@
 package io.github.scordio.tests.pinblocks.iso9564;
 
 import io.github.scordio.junit.converters.Hex;
+import io.github.scordio.pinblocks.iso9564.Decryptor;
+import io.github.scordio.pinblocks.iso9564.Encryptor;
 import io.github.scordio.pinblocks.iso9564.Format4;
 import io.github.scordio.pinblocks.iso9564.Format4.Decoder;
 import io.github.scordio.pinblocks.iso9564.Format4.Encoder;
 import io.github.scordio.pinblocks.iso9564.RandomGenerator;
+import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import java.util.Arrays;
+import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.github.scordio.tests.pinblocks.iso9564.Cipher.AES_ECB;
 import static org.assertj.core.api.BDDAssertions.catchException;
@@ -34,29 +39,44 @@ import static org.assertj.core.api.BDDAssertions.then;
 class Format4Tests {
 
 	@Nested
-	class Encode {
+	class EncoderTests {
 
 		private final Encoder underTest = Format4.encoder().withEncryptor(AES_ECB);
 
+		@Test
+		void builder_should_fail_if_encryptor_is_null() {
+			// When
+			Exception exception = catchException(() -> Format4.encoder().withEncryptor(null));
+
+			// Then
+			then(exception).isInstanceOf(NullPointerException.class).hasMessage("'encryptor' must not be null");
+		}
+
+		@Test
+		void builder_should_fail_if_generator_is_null() {
+			// When
+			Exception exception = catchException(() -> underTest.withRandomGenerator(null));
+
+			// Then
+			then(exception).isInstanceOf(NullPointerException.class).hasMessage("'generator' must not be null");
+		}
+
 		@ParameterizedTest
 		@ValueSource(strings = { "1234", "123456789012" })
-		void should_succeed_with_valid_pin(CharSequence pin) {
-			// Given
-			String pan = "";
-
+		void encode_should_succeed_if_pin_is_valid(CharSequence pin) {
 			// When
-			byte[] pinBlock = underTest.encode(pin, pan);
+			byte[] pinBlock = underTest.encode(pin, "");
 
 			// Then
 			then(pinBlock).hasSize(16);
 
 			Decoder decoder = Format4.decoder().withDecryptor(AES_ECB);
-			then(new String(decoder.decode(pinBlock, pan))).isEqualTo(pin);
+			then(new String(decoder.decode(pinBlock, ""))).isEqualTo(pin);
 		}
 
 		@ParameterizedTest
-		@ValueSource(strings = { "", "1", "12345678901", "123456789012", "1234567890123456789" })
-		void should_succeed_with_valid_pan(String pan) {
+		@ValueSource(strings = { "", "0", "1", "12345678901", "123456789012", "1234567890123456789" })
+		void encode_should_succeed_if_pan_is_valid(String pan) {
 			// Given
 			CharSequence pin = "1234";
 
@@ -70,86 +90,187 @@ class Format4Tests {
 			then(new String(decoder.decode(pinBlock, pan))).isEqualTo(pin);
 		}
 
-		@ParameterizedTest
-		@CsvSource(textBlock = """
-				123456, 000000,              5235DF2C339E3994438AF0F4C38EC09E
-				123456, 123456789012,        B80C1E4CFC6C801F08C4540521AA14E4
-				123456, 1234567890123,       8C973F18F40FBF649F69944353B48BA5
-				123456, 1234567890123456789, 24F7109DD6C824CCCFB0B1D004313361
-				""")
-		void should_succeed_with_custom_random_generator(CharSequence pin, String pan, @Hex byte[] expected) {
+		@Test
+		void encode_should_succeed_with_custom_random_generator() {
 			// Given
-			RandomGenerator alwaysZeros = bytes -> Arrays.fill(bytes, (byte) 0x00);
-			Encoder underTest = this.underTest.withRandomGenerator(alwaysZeros);
+			Encoder underTest = Format4.encoder()
+				.withEncryptor(AES_ECB)
+				.withRandomGenerator(new PredictableRandomGenerator());
 
 			// When
-			byte[] pinBlock = underTest.encode(pin, pan);
+			byte[] pinBlock = underTest.encode("1234", "");
 
 			// Then
-			then(pinBlock).isEqualTo(expected);
+			then(pinBlock).asHexString().isEqualTo("1DE732FDA3B8F103737B4915848F9064");
+		}
+
+		@NullMarked
+		private static class PredictableRandomGenerator implements RandomGenerator {
+
+			private final Random random = new Random(42);
+
+			@Override
+			public void nextBytes(byte[] bytes) {
+				random.nextBytes(bytes);
+			}
+
+		}
+
+		@Test
+		void encode_should_fail_if_pin_is_null() {
+			// When
+			Exception exception = catchException(() -> underTest.encode(null, ""));
+
+			// Then
+			then(exception).isInstanceOf(NullPointerException.class).hasMessage("'pin' must not be null");
 		}
 
 		@ParameterizedTest
 		@ValueSource(strings = { "123", "123A", "1234567890123" })
-		void should_fail_if_pin_is_invalid(CharSequence pin) {
-			// Given
-			String pan = "";
-
+		void encode_should_fail_if_pin_is_invalid(CharSequence pin) {
 			// When
-			Exception exception = catchException(() -> underTest.encode(pin, pan));
+			Exception exception = catchException(() -> underTest.encode(pin, ""));
 
 			// Then
 			then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid PIN");
 		}
 
+		@Test
+		void encode_should_fail_if_pan_is_null() {
+			// When
+			Exception exception = catchException(() -> underTest.encode("1234", null));
+
+			// Then
+			then(exception).isInstanceOf(NullPointerException.class).hasMessage("'pan' must not be null");
+		}
+
 		@ParameterizedTest
 		@ValueSource(strings = { "A", "12345678901234567890" })
-		void should_fail_if_pan_is_invalid(String pan) {
-			// Given
-			String pin = "1234";
-
+		void encode_should_fail_if_pan_is_invalid(String pan) {
 			// When
-			Exception exception = catchException(() -> underTest.encode(pin, pan));
+			Exception exception = catchException(() -> underTest.encode("1234", pan));
 
 			// Then
 			then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid PAN");
 		}
 
+		@ParameterizedTest
+		@ValueSource(ints = { 15, 17 })
+		void encode_should_fail_if_encryptor_does_not_return_expected_block_length(int length) {
+			// Given
+			Encoder underTest = Format4.encoder().withEncryptor(_ -> new byte[length]);
+
+			// When
+			Exception exception = catchException(() -> underTest.encode("1234", ""));
+
+			// Then
+			then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid block length");
+		}
+
+		@ParameterizedTest
+		@ValueSource(ints = { 15, 17 })
+		void encode_should_fail_if_encryptor_does_not_return_expected_block_length_on_second_call(int length) {
+			// Given
+			AtomicInteger counter = new AtomicInteger();
+			Encryptor encryptor = _ -> counter.incrementAndGet() % 2 != 0 ? new byte[16] : new byte[length];
+			Encoder underTest = Format4.encoder().withEncryptor(encryptor);
+
+			// When
+			Exception exception = catchException(() -> underTest.encode("1234", ""));
+
+			// Then
+			then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid block length");
+		}
+
 	}
 
 	@Nested
-	class Decode {
+	class DecoderTests {
+
+		private final Decoder underTest = Format4.decoder().withDecryptor(AES_ECB);
+
+		@Test
+		void builder_should_fail_if_decryptor_is_null() {
+			// When
+			Exception exception = catchException(() -> Format4.decoder().withDecryptor(null));
+
+			// Then
+			then(exception).isInstanceOf(NullPointerException.class).hasMessage("'decryptor' must not be null");
+		}
 
 		@ParameterizedTest
-		@CsvSource(textBlock = """
-				32D4E29C54B2075B86DF599A776C3FA5, 000000,              123456
-				5235DF2C339E3994438AF0F4C38EC09E, 000000,              123456
-				B80C1E4CFC6C801F08C4540521AA14E4, 123456789012,        123456
-				8C973F18F40FBF649F69944353B48BA5, 1234567890123,       123456
-				24F7109DD6C824CCCFB0B1D004313361, 1234567890123456789, 123456
+		@CsvSource("""
+				F6E977BE4AC0DFE037AD73FC73477D35, 1234
+				D477EFB63163F2689CBF9B0C8E0ED70D, 123456789012
 				""")
-		void should_succeed(@Hex byte[] pinBlock, String pan, String expected) {
-			// Given
-			Decoder underTest = Format4.decoder().withDecryptor(AES_ECB);
-
+		void decode_should_succeed_if_pin_block_is_valid(@Hex byte[] pinBlock, String expected) {
 			// When
-			char[] pin = underTest.decode(pinBlock, pan);
+			char[] pin = underTest.decode(pinBlock, "");
 
 			// Then
 			then(new String(pin)).isEqualTo(expected);
 		}
 
 		@ParameterizedTest
+		@CsvSource("""
+				F6E977BE4AC0DFE037AD73FC73477D35, ''
+				F6E977BE4AC0DFE037AD73FC73477D35, 0
+				8724852232071D97BE2818004AFAE57A, 1
+				36F0B9A5457D8680278830E46E30C560, 12345678901
+				6F24663D2B1A2E8744D7AB340E8209FB, 123456789012
+				0BC7A2FCA550804791763CB8B080D2C7, 1234567890123456789
+				""")
+		void decode_should_succeed_if_pan_is_valid(@Hex byte[] pinBlock, String pan) {
+			// When
+			char[] pin = underTest.decode(pinBlock, pan);
+
+			// Then
+			then(new String(pin)).isEqualTo("1234");
+		}
+
+		@ParameterizedTest
+		@ValueSource(strings = { //
+				"F6E977BE4AC0DFE037AD73FC73477D35", // PAN: ""
+				"F6E977BE4AC0DFE037AD73FC73477D35", // PAN: 0
+				"8724852232071D97BE2818004AFAE57A", // PAN: 1
+				"36F0B9A5457D8680278830E46E30C560", // PAN: 12345678901
+				"6F24663D2B1A2E8744D7AB340E8209FB", // PAN: 123456789012
+				"0BC7A2FCA550804791763CB8B080D2C7", // PAN: 1234567890123456789
+		})
+		void decode_should_fail_if_pan_is_wrong(@Hex byte[] pinBlock) {
+			// When
+			Exception exception = catchException(() -> underTest.decode(pinBlock, "123456"));
+
+			// Then
+			then(exception).isInstanceOf(IllegalArgumentException.class);
+		}
+
+		@Test
+		void decode_should_fail_if_pin_block_is_null() {
+			// When
+			Exception exception = catchException(() -> underTest.decode(null, ""));
+
+			// Then
+			then(exception).isInstanceOf(NullPointerException.class).hasMessage("'pinBlock' must not be null");
+		}
+
+		@ParameterizedTest
+		@ValueSource(ints = { 15, 17 })
+		void decode_should_fail_if_pin_block_length_is_invalid(int length) {
+			// When
+			Exception exception = catchException(() -> underTest.decode(new byte[length], ""));
+
+			// Then
+			then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid block length");
+		}
+
+		@ParameterizedTest
 		@ValueSource(strings = { //
 				"F4F2E1D19FCCDC7CAF41A520D18A96F3" // PIN control field: 3
 		})
-		void should_fail_if_pin_control_field_is_invalid(@Hex byte[] pinBlock) {
-			// Given
-			String pan = "000000";
-			Decoder underTest = Format4.decoder().withDecryptor(AES_ECB);
-
+		void decode_should_fail_if_pin_control_field_is_invalid(@Hex byte[] pinBlock) {
 			// When
-			Exception exception = catchException(() -> underTest.decode(pinBlock, pan));
+			Exception exception = catchException(() -> underTest.decode(pinBlock, "000000"));
 
 			// Then
 			then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid PIN control field");
@@ -160,13 +281,9 @@ class Format4Tests {
 				"ABE837E8DC3AA1E678662CD3F33B6D6E", // PIN length: 3
 				"4F30822DDC9AACDB95DB1D480FCAB06D", // PIN length: 13
 		})
-		void should_fail_if_pin_length_is_invalid(@Hex byte[] pinBlock) {
-			// Given
-			String pan = "000000";
-			Decoder underTest = Format4.decoder().withDecryptor(AES_ECB);
-
+		void decode_should_fail_if_pin_length_is_invalid(@Hex byte[] pinBlock) {
 			// When
-			Exception exception = catchException(() -> underTest.decode(pinBlock, pan));
+			Exception exception = catchException(() -> underTest.decode(pinBlock, "000000"));
 
 			// Then
 			then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid PIN length");
@@ -176,13 +293,9 @@ class Format4Tests {
 		@ValueSource(strings = { //
 				"193B29D12E2039FAB36DD78F4626A97F" // Fill digits: AAAAAAAB
 		})
-		void should_fail_if_fill_digits_are_invalid(@Hex byte[] pinBlock) {
-			// Given
-			String pan = "000000";
-			Decoder underTest = Format4.decoder().withDecryptor(AES_ECB);
-
+		void decode_should_fail_if_fill_digits_are_invalid(@Hex byte[] pinBlock) {
 			// When
-			Exception exception = catchException(() -> underTest.decode(pinBlock, pan));
+			Exception exception = catchException(() -> underTest.decode(pinBlock, "000000"));
 
 			// Then
 			then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid fill digits");
@@ -192,16 +305,59 @@ class Format4Tests {
 		@ValueSource(strings = { //
 				"2590B13382E284FAEA90D002269E01F4" // PIN: 12345A
 		})
-		void should_fail_if_pin_contains_non_decimal_digits(@Hex byte[] pinBlock) {
-			// Given
-			String pan = "000000";
-			Decoder underTest = Format4.decoder().withDecryptor(AES_ECB);
-
+		void decode_should_fail_if_pin_has_non_decimal_digits(@Hex byte[] pinBlock) {
 			// When
-			Exception exception = catchException(() -> underTest.decode(pinBlock, pan));
+			Exception exception = catchException(() -> underTest.decode(pinBlock, "000000"));
 
 			// Then
 			then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid PIN digit");
+		}
+
+		@Test
+		void decode_should_fail_if_pan_is_null() {
+			// When
+			Exception exception = catchException(() -> underTest.decode(new byte[16], null));
+
+			// Then
+			then(exception).isInstanceOf(NullPointerException.class).hasMessage("'pan' must not be null");
+		}
+
+		@ParameterizedTest
+		@ValueSource(strings = { "A", "12345678901234567890" })
+		void decode_should_fail_if_pan_is_invalid(String pan) {
+			// When
+			Exception exception = catchException(() -> underTest.decode(new byte[16], pan));
+
+			// Then
+			then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid PAN");
+		}
+
+		@ParameterizedTest
+		@ValueSource(ints = { 15, 17 })
+		void decode_should_fail_if_decryptor_does_not_return_expected_block_length(int length) {
+			// Given
+			Decoder underTest = Format4.decoder().withDecryptor(_ -> new byte[length]);
+
+			// When
+			Exception exception = catchException(() -> underTest.decode(new byte[16], ""));
+
+			// Then
+			then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid block length");
+		}
+
+		@ParameterizedTest
+		@ValueSource(ints = { 15, 17 })
+		void decode_should_fail_if_decryptor_does_not_return_expected_block_length_on_second_call(int length) {
+			// Given
+			AtomicInteger counter = new AtomicInteger();
+			Decryptor decryptor = _ -> counter.incrementAndGet() % 2 != 0 ? new byte[16] : new byte[length];
+			Decoder underTest = Format4.decoder().withDecryptor(decryptor);
+
+			// When
+			Exception exception = catchException(() -> underTest.decode(new byte[16], ""));
+
+			// Then
+			then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid block length");
 		}
 
 	}
