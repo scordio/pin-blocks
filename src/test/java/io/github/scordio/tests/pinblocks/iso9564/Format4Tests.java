@@ -29,10 +29,13 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.util.HexFormat;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.github.scordio.tests.pinblocks.iso9564.Cipher.AES_ECB;
+import static java.lang.Integer.toHexString;
+import static java.lang.Math.max;
 import static org.assertj.core.api.BDDAssertions.catchException;
 import static org.assertj.core.api.BDDAssertions.then;
 
@@ -264,11 +267,11 @@ class Format4Tests {
 			then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid block length");
 		}
 
-		@ParameterizedTest
-		@ValueSource(strings = { //
-				"F4F2E1D19FCCDC7CAF41A520D18A96F3" // PIN control field: 3
-		})
-		void decode_should_fail_if_pin_control_field_is_invalid(@Hex byte[] pinBlock) {
+		@Test
+		void decode_should_fail_if_pin_control_field_is_invalid() {
+			// Given
+			byte[] pinBlock = PinBlock.forPin("1234").pan("").controlField('3').encrypt();
+
 			// When
 			Exception exception = catchException(() -> underTest.decode(pinBlock, "000000"));
 
@@ -277,37 +280,37 @@ class Format4Tests {
 		}
 
 		@ParameterizedTest
-		@ValueSource(strings = { //
-				"ABE837E8DC3AA1E678662CD3F33B6D6E", // PIN length: 3
-				"4F30822DDC9AACDB95DB1D480FCAB06D", // PIN length: 13
-		})
-		void decode_should_fail_if_pin_length_is_invalid(@Hex byte[] pinBlock) {
+		@ValueSource(ints = { 3, 13 })
+		void decode_should_fail_if_pin_length_is_invalid(int pinLength) {
+			// Given
+			byte[] pinBlock = PinBlock.forPin("1234").pan("").pinLength(pinLength).encrypt();
+
 			// When
-			Exception exception = catchException(() -> underTest.decode(pinBlock, "000000"));
+			Exception exception = catchException(() -> underTest.decode(pinBlock, ""));
 
 			// Then
 			then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid PIN length");
 		}
 
-		@ParameterizedTest
-		@ValueSource(strings = { //
-				"193B29D12E2039FAB36DD78F4626A97F" // Fill digits: AAAAAAAB
-		})
-		void decode_should_fail_if_fill_digits_are_invalid(@Hex byte[] pinBlock) {
+		@Test
+		void decode_should_fail_if_fill_digits_are_invalid() {
+			// Given
+			byte[] pinBlock = PinBlock.forPin("1234").pan("").fill("AAAAAAAAAB").encrypt();
+
 			// When
-			Exception exception = catchException(() -> underTest.decode(pinBlock, "000000"));
+			Exception exception = catchException(() -> underTest.decode(pinBlock, ""));
 
 			// Then
 			then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid fill digits");
 		}
 
-		@ParameterizedTest
-		@ValueSource(strings = { //
-				"2590B13382E284FAEA90D002269E01F4" // PIN: 12345A
-		})
-		void decode_should_fail_if_pin_has_non_decimal_digits(@Hex byte[] pinBlock) {
+		@Test
+		void decode_should_fail_if_pin_has_non_decimal_digits() {
+			// Given
+			byte[] pinBlock = PinBlock.forPin("12345A").pan("").encrypt();
+
 			// When
-			Exception exception = catchException(() -> underTest.decode(pinBlock, "000000"));
+			Exception exception = catchException(() -> underTest.decode(pinBlock, ""));
 
 			// Then
 			then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid PIN digit");
@@ -358,6 +361,78 @@ class Format4Tests {
 
 			// Then
 			then(exception).isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid block length");
+		}
+
+		private static class PinBlock {
+
+			private static final HexFormat HEX = HexFormat.of();
+
+			private final String pin;
+
+			private String pan = "";
+
+			private char controlField = '4';
+
+			private int pinLength;
+
+			private String fill;
+
+			static PinBlock forPin(String pin) {
+				return new PinBlock(pin);
+			}
+
+			private PinBlock(String pin) {
+				this.pin = pin;
+				this.pinLength = pin.length();
+				this.fill = "A".repeat(max(0, 14 - pin.length()));
+			}
+
+			PinBlock pan(String pan) {
+				this.pan = pan;
+				return this;
+			}
+
+			PinBlock controlField(char controlField) {
+				this.controlField = controlField;
+				return this;
+			}
+
+			PinBlock pinLength(int length) {
+				this.pinLength = length;
+				return this;
+			}
+
+			PinBlock fill(String fill) {
+				int expectedLength = 14 - pin.length();
+				if (fill.length() != expectedLength) {
+					throw new IllegalArgumentException(
+							"Fill must have " + expectedLength + " digits for a PIN of " + pin.length() + " digits");
+				}
+				this.fill = fill;
+				return this;
+			}
+
+			byte[] encrypt() {
+				byte[] pinField = HEX.parseHex(pinField());
+				byte[] panField = HEX.parseHex(panField());
+				byte[] intermediate = AES_ECB.encrypt(pinField);
+				for (int i = 0; i < intermediate.length; i++) {
+					intermediate[i] ^= panField[i];
+				}
+				return AES_ECB.encrypt(intermediate);
+			}
+
+			private String pinField() {
+				String random = "0000000000000000";
+				return controlField + toHexString(pinLength) + pin + fill + random;
+			}
+
+			private String panField() {
+				int length = pan.length();
+				String field = max(0, length - 12) + "0".repeat(max(0, 12 - length)) + pan;
+				return field + "0".repeat(32 - field.length());
+			}
+
 		}
 
 	}
