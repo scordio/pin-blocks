@@ -1,0 +1,109 @@
+# Project information
+site_name: PIN Blocks
+site_url: https://stefano.codes/pin-blocks
+site_author: Stefano Cordio
+site_description: Encoders and decoders for ISO 9564-1 PIN block formats
+
+site_dir: target/mkdocs
+
+# Fail with warnings
+strict: true
+
+# Repository
+repo_url: https://github.com/scordio/pin-blocks
+edit_uri: edit/main/docs/
+
+# Copyright
+copyright: Copyright &copy; 2025 - 2026 Stefano Cordio
+
+# Configuration
+theme:
+  name: material
+  features:
+    - content.action.edit
+    - content.code.copy
+    - content.tabs.link
+    - navigation.sections
+    - toc.integrate
+  icon:
+    edit: material/pencil
+    repo: fontawesome/brands/github
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/link
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+#      primary: green
+#      accent: green
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+#      primary: green
+#      accent: green
+      toggle:
+        icon: material/toggle-switch-off
+        name: Switch to system preference
+
+# Plugins
+plugins:
+  - git-revision-date-localized:
+      type: timeago
+  - privacy:
+      assets: false
+      links_attr_map:
+        target: _blank
+  - search
+  - social:
+      cards_layout: default/variant
+
+# Additional configuration
+extra:
+  social:
+    - icon: fontawesome/brands/bluesky
+      link: https://bsky.app/profile/scordio.github.io
+    - icon: fontawesome/brands/mastodon
+      link: https://mastodon.social/@scordio
+    - icon: fontawesome/brands/x-twitter
+      link: https://x.com/stefanocodes
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/scordio/
+
+# Extensions
+markdown_extensions:
+  - admonition
+  - attr_list
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.snippets:
+      base_path:
+        - src/demo/java/io/github/scordio
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+  - toc:
+      permalink: true
+
+# Extra stylesheets
+extra_css:
+  - stylesheets/extra.css
+  - stylesheets/pygments-intellij.css
+
+# Page tree
+nav:
+  - index.md
+  - Formats:
+    - formats/format-0.md
+    - formats/format-1.md
+    - formats/format-2.md
+    - formats/format-3.md
+    - formats/format-4.md
+  - release-notes.md
