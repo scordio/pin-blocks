@@ -16,12 +16,12 @@
 package io.github.scordio.tests.pinblocks.iso9564;
 
 import io.github.scordio.junit.converters.Hex;
-import io.github.scordio.pinblocks.iso9564.Decryptor;
-import io.github.scordio.pinblocks.iso9564.Encryptor;
+import io.github.scordio.pinblocks.Decryptor;
+import io.github.scordio.pinblocks.Encryptor;
 import io.github.scordio.pinblocks.iso9564.Format4;
 import io.github.scordio.pinblocks.iso9564.Format4.Decoder;
 import io.github.scordio.pinblocks.iso9564.Format4.Encoder;
-import io.github.scordio.pinblocks.iso9564.RandomGenerator;
+import io.github.scordio.pinblocks.RandomGenerator;
 import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -33,7 +33,7 @@ import java.util.HexFormat;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static io.github.scordio.tests.pinblocks.iso9564.Cipher.AES_ECB;
+import static io.github.scordio.tests.pinblocks.Cipher.AES_ECB;
 import static java.lang.Integer.toHexString;
 import static java.lang.Math.max;
 import static org.assertj.core.api.BDDAssertions.catchException;

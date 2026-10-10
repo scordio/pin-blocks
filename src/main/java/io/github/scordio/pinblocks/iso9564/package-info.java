@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- * Encoders and decoders for ISO 9564-1 PIN block formats.
+ * Encoders and decoders for ISO 9564 PIN block formats.
  */
 @NullMarked
 package io.github.scordio.pinblocks.iso9564;

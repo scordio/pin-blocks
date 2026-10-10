@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.github.scordio.tests.pinblocks.iso9564;
+package io.github.scordio.tests.pinblocks;
 
-import io.github.scordio.pinblocks.iso9564.Decryptor;
-import io.github.scordio.pinblocks.iso9564.Encryptor;
+import io.github.scordio.pinblocks.Decryptor;
+import io.github.scordio.pinblocks.Encryptor;
 import org.jspecify.annotations.NullMarked;
 
 import javax.crypto.SecretKey;
@@ -24,7 +24,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.security.GeneralSecurityException;
 
 @NullMarked
-enum Cipher implements Encryptor, Decryptor {
+public enum Cipher implements Encryptor, Decryptor {
 
 	AES_ECB("AES/ECB/NoPadding");
 

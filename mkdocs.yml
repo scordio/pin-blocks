@@ -2,7 +2,7 @@
 site_name: PIN Blocks
 site_url: https://stefano.codes/pin-blocks
 site_author: Stefano Cordio
-site_description: Encoders and decoders for ISO 9564-1 PIN block formats
+site_description: Encoders and decoders for PIN block formats
 
 site_dir: target/mkdocs
 
@@ -101,9 +101,9 @@ extra_css:
 nav:
   - index.md
   - Formats:
-    - formats/format-0.md
-    - formats/format-1.md
-    - formats/format-2.md
-    - formats/format-3.md
-    - formats/format-4.md
+    - formats/iso9564-format-0.md
+    - formats/iso9564-format-1.md
+    - formats/iso9564-format-2.md
+    - formats/iso9564-format-3.md
+    - formats/iso9564-format-4.md
   - release-notes.md

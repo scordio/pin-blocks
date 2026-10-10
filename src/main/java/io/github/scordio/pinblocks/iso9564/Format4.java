@@ -20,6 +20,9 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
+import io.github.scordio.pinblocks.Decryptor;
+import io.github.scordio.pinblocks.Encryptor;
+import io.github.scordio.pinblocks.RandomGenerator;
 import org.jspecify.annotations.Nullable;
 
 /**

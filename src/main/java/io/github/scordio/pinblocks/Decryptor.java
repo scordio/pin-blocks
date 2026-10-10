@@ -13,30 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.github.scordio.pinblocks.iso9564;
+package io.github.scordio.pinblocks;
 
 /**
- * Encrypts a block of data as part of PIN block encoding.
+ * Decrypts a block of data as part of PIN block decoding.
  * <p>
  * This abstraction is context-agnostic: it defines no specific cipher or block size. The
  * expected input/output length and cryptographic algorithm are determined by the calling
  * context.
  *
- * @see Format4.Encoder.Builder#withEncryptor(Encryptor)
+ * @see io.github.scordio.pinblocks.iso9564.Format4.Decoder.Builder#withDecryptor(Decryptor)
  */
 @FunctionalInterface
-public interface Encryptor {
+public interface Decryptor {
 
 	/**
-	 * Encrypts the given bytes.
+	 * Decrypts the given bytes.
 	 * <p>
 	 * Implementations must return a new, independent array, leaving the input unmodified
 	 * and never returning the same instance. No assumptions should be made about how the
 	 * returned array will be used afterward, including whether it may be retained,
 	 * modified, or zeroed.
-	 * @param input the bytes to encrypt; never {@code null}
-	 * @return the encrypted bytes; never {@code null}
+	 * @param input the bytes to decrypt; never {@code null}
+	 * @return the decrypted bytes; never {@code null}
 	 */
-	byte[] encrypt(byte[] input);
+	byte[] decrypt(byte[] input);
 
 }

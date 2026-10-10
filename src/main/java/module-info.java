@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 /**
- * Encoders and decoders for ISO 9564-1 PIN block formats.
+ * Encoders and decoders for PIN block formats.
  */
 module io.github.scordio.pinblocks {
 
 	requires static transitive org.jspecify;
+
+	exports io.github.scordio.pinblocks;
 
 	exports io.github.scordio.pinblocks.iso9564;
 

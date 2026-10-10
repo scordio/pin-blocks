@@ -2,29 +2,12 @@
 
 [![CI](https://github.com/scordio/pin-blocks/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/scordio/pin-blocks/actions/workflows/main.yml?query=branch%3Amain)
 
-This project provides encoders and decoders for ISO 9564-1 PIN block formats.
+This project provides encoders and decoders for PIN block formats.
 
-## Getting Started
+## Documentation
 
-### Compatibility
-
-PIN Blocks requires Java 11 or higher.
-
-### Maven
-
-```xml
-<dependency>
-  <groupId>io.github.scordio</groupId>
-  <artifactId>pin-blocks</artifactId>
-  <version>${pin-blocks.version}</version>
-</dependency>
-```
-
-### Gradle
-
-```kotlin
-implementation("io.github.scordio:pin-blocks:${pinBlocksVersion}")
-```
+- [User Guide](https://stefano.codes/pin-blocks/)
+- [Release Notes](https://github.com/scordio/pin-blocks/)
 
 ## License
 

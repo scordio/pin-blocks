@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.github.scordio.pinblocks.iso9564;
+package io.github.scordio.pinblocks;
 
 /**
  * Generates random bytes as part of PIN block encoding.
@@ -22,7 +22,7 @@ package io.github.scordio.pinblocks.iso9564;
  * required length is determined by the calling context via the size of the supplied
  * array.
  *
- * @see Format4.Encoder#withRandomGenerator(RandomGenerator)
+ * @see io.github.scordio.pinblocks.iso9564.Format4.Encoder#withRandomGenerator(RandomGenerator)
  */
 @FunctionalInterface
 public interface RandomGenerator {
