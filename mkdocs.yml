@@ -14,7 +14,7 @@ repo_url: https://github.com/scordio/pin-blocks
 edit_uri: edit/main/docs/
 
 # Copyright
-copyright: Copyright &copy; 2025 - 2026 Stefano Cordio
+copyright: Copyright &copy; 2025 - 2026 the original author or authors
 
 # Configuration
 theme:
@@ -27,6 +27,7 @@ theme:
     - toc.integrate
   icon:
     edit: material/pencil
+    logo: material/form-textbox-password
     repo: fontawesome/brands/github
   palette:
     - media: "(prefers-color-scheme)"
@@ -101,9 +102,5 @@ extra_css:
 nav:
   - index.md
   - Formats:
-    - formats/iso9564-format-0.md
-    - formats/iso9564-format-1.md
-    - formats/iso9564-format-2.md
-    - formats/iso9564-format-3.md
     - formats/iso9564-format-4.md
   - release-notes.md

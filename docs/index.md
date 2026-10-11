@@ -30,12 +30,4 @@ PIN Blocks requires Java 11 or higher.
 
 The following formats are supported:
 
-* [ISO 9564 Format 0](formats/iso9564-format-0.md), as per [ISO 9564-1][] specification
-* [ISO 9564 Format 1](formats/iso9564-format-1.md), as per [ISO 9564-1:2002][] specification
-* [ISO 9564 Format 2](formats/iso9564-format-2.md), as per [ISO 9564-1:2017][] specification
-* [ISO 9564 Format 3](formats/iso9564-format-3.md), as per [ISO 9564-1:2002][] specification
-* [ISO 9564 Format 4](formats/iso9564-format-4.md), as per [ISO 9564-1:2017][] specification
-
-[ISO 9564-1]: https://www.iso.org/standard/17309.html
-[ISO 9564-1:2002]: https://www.iso.org/standard/29374.html
-[ISO 9564-1:2017]: https://www.iso.org/standard/68669.html
+* [ISO 9564 Format 4](formats/iso9564-format-4.md)
