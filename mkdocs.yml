@@ -99,7 +99,6 @@ markdown_extensions:
 
 # Extra stylesheets
 extra_css:
-  - stylesheets/extra.css
   - stylesheets/pygments-intellij.css
 
 # Page tree
