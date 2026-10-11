@@ -4,7 +4,7 @@ site_url: https://stefano.codes/pin-blocks
 site_author: Stefano Cordio
 site_description: Encoders and decoders for PIN block formats
 
-site_dir: target/mkdocs
+site_dir: target/docs
 
 # Fail with warnings
 strict: true
@@ -61,6 +61,10 @@ plugins:
   - social:
       cards_layout: default/variant
 
+# Hooks
+hooks:
+  - hooks/javadoc.py
+
 # Additional configuration
 extra:
   social:
@@ -103,4 +107,5 @@ nav:
   - index.md
   - Formats:
     - formats/iso9564-format-4.md
+  - javadoc.md
   - release-notes.md
