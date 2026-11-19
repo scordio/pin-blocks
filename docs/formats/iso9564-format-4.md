@@ -11,8 +11,8 @@ Both the encoder and the decoder are built on the `Encryptor` and `Decryptor` ab
 cryptographic backend (Java Cryptography Architecture, BouncyCastle, an HSM client, etc.).
 The library never handles keys itself.
 
-For Format 4, the given `Encryptor` and `Decryptor` must use AES in ECB mode without padding, and operate on 16-byte
-blocks.
+The given `Encryptor` and `Decryptor` must use AES in ECB mode without padding, and operate on 16-byte blocks.
+
 For example, using JCA:
 
 ``` java

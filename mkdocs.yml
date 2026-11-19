@@ -24,6 +24,7 @@ theme:
     - content.code.copy
     - content.tabs.link
     - navigation.sections
+    - search.highlight
     - toc.integrate
   icon:
     edit: material/pencil
@@ -32,21 +33,21 @@ theme:
   palette:
     - media: "(prefers-color-scheme)"
       toggle:
-        icon: material/link
+        icon: lucide/sun-moon
         name: Switch to light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default
 #      primary: green
 #      accent: green
       toggle:
-        icon: material/toggle-switch
+        icon: lucide/sun
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
 #      primary: green
 #      accent: green
       toggle:
-        icon: material/toggle-switch-off
+        icon: lucide/moon
         name: Switch to system preference
 
 # Plugins
@@ -60,10 +61,6 @@ plugins:
   - search
   - social:
       cards_layout: default/variant
-
-# Hooks
-hooks:
-  - hooks/javadoc.py
 
 # Additional configuration
 extra:
@@ -106,5 +103,5 @@ nav:
   - index.md
   - Formats:
     - formats/iso9564-format-4.md
-  - javadoc.md
-  - release-notes.md
+  - Javadoc: https://stefano.codes/pin-blocks/api
+  - Release Notes: https://github.com/scordio/pin-blocks/releases
