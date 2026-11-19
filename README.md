@@ -7,7 +7,7 @@ This project provides encoders and decoders for PIN block formats.
 ## Documentation
 
 - [User Guide](https://stefano.codes/pin-blocks/)
-- [Release Notes](https://github.com/scordio/pin-blocks/)
+- [Release Notes](https://github.com/scordio/pin-blocks/releases)
 
 ## License
 
